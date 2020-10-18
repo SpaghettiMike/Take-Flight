@@ -20,9 +20,6 @@
 #include "gatts_table_creat_demo.h"
 
 
-extern "C" {
-	void app_main(void);
-}
 
 void app_main(void)
 {

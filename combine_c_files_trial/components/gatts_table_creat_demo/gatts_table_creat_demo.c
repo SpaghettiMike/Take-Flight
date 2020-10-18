@@ -30,6 +30,9 @@
 #include "esp_bt_main.h"
 #include "gatts_table_creat_demo.h"
 #include "esp_gatt_common_api.h"
+
+#include "nvs_blob.h"
+
 #define STORAGE_NAMESPACE "storage"
 #define GATTS_TABLE_TAG "GATTS_TABLE_DEMO"
 

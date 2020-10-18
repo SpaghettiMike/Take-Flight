@@ -147,7 +147,7 @@ esp_err_t get_blob_values(uint16_t accel_x[10], uint16_t accel_y[10], uint16_t a
 
 }
 
-esp_err_t get_values(uint64_t* lat_init, uint64_t* lat_final, uint64_t* long_init, uint64_t* long_final, uint64_t* alt_init, uint64_t* alt_final, uint16* avg_rps, uint16* peak_rps)
+esp_err_t get_values(uint64_t* lat_init, uint64_t* lat_final, uint64_t* long_init, uint64_t* long_final, uint64_t* alt_init, uint64_t* alt_final, uint16_t* avg_rps, uint16_t* peak_rps)
 {
     nvs_handle_t my_handle;
     esp_err_t err;
