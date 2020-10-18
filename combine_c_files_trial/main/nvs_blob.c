@@ -115,36 +115,29 @@ esp_err_t get_blob_values(uint16_t accel_x[10], uint16_t accel_y[10], uint16_t a
     nvs_handle_t my_handle;
     esp_err_t err;
 
-    char* accel_x = "accel_x";
-    char* accel_y = "accel_y";
-    char* accel_z = "accel_z";
-
-    char* gyro_x = "gyro_x";
-    char* gyro_y = "gyro_y";
-    char* gyro_z = "gyro_z";
-
     err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
     if (err != ESP_OK) return err;
     size_t size;
 
-    err = nvs_get_blob(my_handle, location, accel_x, &size);
+    err = nvs_get_blob(my_handle, "accel_x", accel_x, &size);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    err = nvs_get_blob(my_handle, location, accel_y, &size);
+    err = nvs_get_blob(my_handle, "accel_y", accel_y, &size);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    err = nvs_get_blob(my_handle, location, accel_z, &size);
+    err = nvs_get_blob(my_handle, "accel_z", accel_z, &size);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    err = nvs_get_blob(my_handle, location, gyro_x, &size);
+    err = nvs_get_blob(my_handle, "gyro_x", gyro_x, &size);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    err = nvs_get_blob(my_handle, location, gyro_y, &size);
+    err = nvs_get_blob(my_handle, "gyro_y", gyro_y, &size);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    err = nvs_get_blob(my_handle, location, gyro_z, &size);
+    err = nvs_get_blob(my_handle, "gyro_z", gyro_z, &size);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
+   return ESP_OK; 
 }
 
 esp_err_t get_values(uint64_t* lat_init, uint64_t* lat_final, uint64_t* long_init, uint64_t* long_final, uint64_t* alt_init, uint64_t* alt_final, uint16_t* avg_rps, uint16_t* peak_rps)
@@ -155,34 +148,30 @@ esp_err_t get_values(uint64_t* lat_init, uint64_t* lat_final, uint64_t* long_ini
     // Open
     err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
     if (err != ESP_OK) return err;
-    uint32_t data = 0;
 
-    err = nvs_get_u64(my_handle, location, &lat_init);
+    err = nvs_get_u64(my_handle, "lat_init", lat_init);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    err = nvs_get_u64(my_handle, location, &lat_final);
+    err = nvs_get_u64(my_handle, "lat_final", lat_final);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    err = nvs_get_u64(my_handle, location, &long_init);
+    err = nvs_get_u64(my_handle, "long_init", long_init);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    err = nvs_get_u64(my_handle, location, &long_final);
+    err = nvs_get_u64(my_handle, "long_final", long_final);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    err = nvs_get_u64(my_handle, location, &alt_init);
+    err = nvs_get_u64(my_handle, "alt_init", alt_init);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    err = nvs_get_u64(my_handle, location, &alt_final);
+    err = nvs_get_u64(my_handle, "alt_final", alt_final);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    err = nvs_get_u64(my_handle, location, &avg_rps);
+    err = nvs_get_u16(my_handle, "avg_rps", avg_rps);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    err = nvs_get_u64(my_handle, location, &peak_rps);
+    err = nvs_get_u16(my_handle, "peak_rps", peak_rps);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
-
-
-    printf("%s = %d\n", location, data);
 
     // Close
     nvs_close(my_handle);
