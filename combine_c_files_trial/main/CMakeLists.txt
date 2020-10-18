@@ -1,3 +1,3 @@
-set(SRCS "main_components.c"
+set(SRCS "main_components.c" "nvs_blob.c" "gatts_table_creat_demo.c"
 	INCLUDE_DIRS "include"
     )
