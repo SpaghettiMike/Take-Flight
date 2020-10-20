@@ -16,7 +16,10 @@
 #include "soc/gpio_struct.h"
 #include "driver/gpio.h"
 
-#include "pretty_effect.h"
+#define STORAGE_NAMESPACE "storage"
+
+#include "nvs_blob.h"
+
 
 /*
  This code displays some fancy graphics on the 320x240 LCD on an ESP-WROVER_KIT board.
@@ -84,22 +87,20 @@
 #define PARALLEL_LINES 16
 #define INV_MAX_SERIAL_READ 16
 
-/*
- The LCD needs a bunch of command/argument values to be initialized. They are stored in this struct.
-*/
-// typedef struct {
-//     uint8_t cmd;
-//     uint8_t data[16];
-//     uint8_t databytes; //No of data in data; bit 7 = delay after set; 0xFF = end of cmds.
-// } lcd_init_cmd_t;
 
-// typedef enum {
-//     LCD_TYPE_ILI = 1,
-//     LCD_TYPE_ST,
-//     LCD_TYPE_MAX,
-// } type_lcd_t;
+typedef struct {
+    uint8_t accel_x[ARRAY_SIZE];
+    uint8_t accel_y[ARRAY_SIZE];
+    uint8_t accel_z[ARRAY_SIZE];
+    uint8_t gyro_x[ARRAY_SIZE];
+    uint8_t gyro_y[ARRAY_SIZE];
+    uint8_t gyro_z[ARRAY_SIZE];
+    uint8_t mag_x[ARRAY_SIZE];
+    uint8_t mag_y[ARRAY_SIZE];
+    uint8_t mag_z[ARRAY_SIZE];
+}IMU_data_storage;
 
-
+static IMU_data_storage IMU_data;
 
 //This function is called (in irq context!) just before a transmission starts. It will
 //set the D/C line to the value indicated in the user field.
@@ -108,7 +109,6 @@ void lcd_spi_pre_transfer_callback(spi_transaction_t *t)
     int dc=(int)t->user;
     gpio_set_level(PIN_NUM_DC, dc);
 }
-
 
 #define GPIO_OUTPUT_PIN_SEL (1ULL << PIN_NUM_CS)
 
@@ -187,7 +187,7 @@ bool imu_write_trans(spi_device_handle_t spi, uint8_t reg, uint8_t data)
 }
 
 //read lsm6ds3 chip id;
-void imu_read(spi_device_handle_t spi, uint8_t reg1, uint8_t reg2, int user, uint16_t *value)
+void imu_read(spi_device_handle_t spi, uint8_t reg1, uint8_t reg2, int user, uint8_t value[2])
 {
     uint8_t id1;
     uint8_t id2;
@@ -211,15 +211,15 @@ void imu_read(spi_device_handle_t spi, uint8_t reg1, uint8_t reg2, int user, uin
     if (reg2 == 0)
     {
         imu_read_trans(spi, reg1, &id1);
-        printf("0x%02X\n", id1);
         *value = id1;
     }
     else
     {
         imu_read_trans(spi, reg1, &id1);
         imu_read_trans(spi, reg2, &id2);
-        *value = (id1 << 8) | id2;
-        printf("LCD ID: 0x%04X\n", *value);
+        //*value = (id1 << 8) | id2;
+        value[0] = id1;
+        value[1] = id2;
     }
 }
 
@@ -243,68 +243,85 @@ void imu_write(spi_device_handle_t spi, uint8_t write_reg, uint8_t write_data, i
             printf("ERROR! Enter a value between 0 and 3.\n");
     }
     imu_write_trans(spi, write_reg, write_data);
-    uint8_t read_data;
-    imu_read_trans(spi,write_reg, &read_data);
-    printf("read data from register 0x%02X: 0x%02X\n", write_reg, read_data);
+    //uint8_t read_data;
+    //imu_read_trans(spi,write_reg, &read_data);
+    //printf("read data from register 0x%02X: 0x%02X\n", write_reg, read_data);
 }
 
-void get_accel(spi_device_handle_t spi)
+void get_accel(spi_device_handle_t spi, int x)
 {
-    uint16_t value;
-    double decimal;
+    uint8_t value[2];
+    //double decimal;
     //printf("X Accel bit value");
-    imu_read(spi, ACCEL_XOUT_H, ACCEL_XOUT_L, 0, &value);
-    decimal = value / 16384.0;
-    printf("X Accel decimal value %2.2f\n",decimal);
+    imu_read(spi, ACCEL_XOUT_H, ACCEL_XOUT_L, 0, value);
+    IMU_data.accel_x[x] = value[x];
+    IMU_data.accel_x[x+1] = value[x+1];
+//    decimal = value / 16384.0;
+    //printf("X Accel decimal value %2.2f\n",decimal);
     //printf("Y Accel bit value:");
-    //imu_read(spi, ACCEL_YOUT_H, ACCEL_YOUT_L, 0, &value);
+    imu_read(spi, ACCEL_YOUT_H, ACCEL_YOUT_L, 0, value);
+    IMU_data.accel_y[x] = value[x];
+    IMU_data.accel_y[x+1] = value[x+1];
     //decimal = value / 16384.0;
     //printf("Y Accel decimal value %2.2f\nZ Accel bit value",decimal);
-    //imu_read(spi, ACCEL_YOUT_H, ACCEL_YOUT_L, 0, &value);
+    imu_read(spi, ACCEL_YOUT_H, ACCEL_YOUT_L, 0, value);
+    IMU_data.accel_z[x] = value[x];
+    IMU_data.accel_z[x+1] = value[x+1];
     //decimal = value / 16384.0;
     //printf("Z Accel decimal value %2.2f\n", decimal);
 }
 
-void get_gyro(spi_device_handle_t spi)
+void get_gyro(spi_device_handle_t spi, int x)
 {
-    uint16_t value;
-    double decimal;
+    uint8_t value[2];
+    //double decimal;
+    //printf("X Gyro bit value");
+    imu_read(spi, GYRO_XOUT_H, GYRO_XOUT_L, 0, value);
+    IMU_data.gyro_x[x] = value[x];
+    IMU_data.gyro_x[x+1] = value[x+1];
+    //decimal = value / 131.0;
+    //printf("X Gyro decimal value %2.2f\n",decimal);
 
-    printf("X Gyro bit value");
-    imu_read(spi, GYRO_XOUT_H, GYRO_XOUT_L, 0, &value);
-    decimal = value / 131.0;
-    printf("X Gyro decimal value %2.2f\n",decimal);
+    //printf("Y Gyro bit value");
+    imu_read(spi, GYRO_YOUT_H, GYRO_YOUT_L, 0, value);
+    IMU_data.gyro_y[x] = value[x];
+    IMU_data.gyro_y[x+1] = value[x+1];
+    //decimal = value / 131.0;
+    //printf("Y Gyro decimal value %2.2f\n",decimal);
 
-    printf("Y Gyro bit value");
-    imu_read(spi, GYRO_YOUT_H, GYRO_YOUT_L, 0, &value);
-    decimal = value / 131.0;
-    printf("Y Gyro decimal value %2.2f\n",decimal);
-
-    printf("Z Gyro bit value");
-    imu_read(spi, GYRO_ZOUT_H, GYRO_ZOUT_L, 0, &value);
-    decimal = value / 131.0;
-    printf("Z Gyro decimal value %2.2f\n",decimal);
+    //printf("Z Gyro bit value");
+    imu_read(spi, GYRO_ZOUT_H, GYRO_ZOUT_L, 0, value);
+    IMU_data.gyro_z[x] = value[x];
+    IMU_data.gyro_z[x+1] = value[x+1];
+    //decimal = value / 131.0;
+    //printf("Z Gyro decimal value %2.2f\n",decimal);
 }
 
-void get_magnetometer(spi_device_handle_t spi)
+void get_magnetometer(spi_device_handle_t spi, int x)
 {
-    uint16_t value;
-    double decimal;
+    uint8_t value[2];
+    //double decimal;
 
-    printf("X Mag bit value");
-    imu_read(spi, MAG_X_H, MAG_X_L, 3, &value);
-    decimal = value / 0.15;
-    printf("X Mag decimal value %2.2f\n",decimal);
+    //printf("X Mag bit value");
+    imu_read(spi, MAG_X_H, MAG_X_L, 3, value);
+    IMU_data.mag_x[x] = value[x];
+    IMU_data.mag_x[x+1] = value[x+1];
+    //decimal = value / 0.15;
+    //printf("X Mag decimal value %2.2f\n",decimal);
 
-    printf("Y Mag bit value");
-    imu_read(spi, MAG_Y_H, MAG_Y_L, 3, &value);
-    decimal = value / 0.15;
-    printf("Y Mag decimal value %2.2f\n",decimal);
+    //printf("Y Mag bit value");
+    imu_read(spi, MAG_Y_H, MAG_Y_L, 3, value);
+    IMU_data.mag_y[x] = value[x];
+    IMU_data.mag_y[x+1] = value[x+1];
+    //decimal = value / 0.15;
+    //printf("Y Mag decimal value %2.2f\n",decimal);
 
-    printf("Z Mag bit value");
-    imu_read(spi, MAG_Z_H, MAG_Z_L, 3, &value);
-    decimal = value / 0.15;
-    printf("Z Gyro decimal value %2.2f\n",decimal);
+    //printf("Z Mag bit value");
+    imu_read(spi, MAG_Z_H, MAG_Z_L, 3, value);
+    IMU_data.mag_z[x] = value[x];
+    IMU_data.mag_z[x+1] = value[x+1];
+    //decimal = value / 0.15;
+    //printf("Z Gyro decimal value %2.2f\n",decimal);
 }
 
 void imu_initialize(spi_device_handle_t spi)
@@ -316,7 +333,147 @@ void imu_initialize(spi_device_handle_t spi)
     imu_write(spi, MAG_CNTL2, 0x08, 3);
 }
 
-int inv_icm20948_firmware_load(struct inv_icm20948 * s, const unsigned char *data_start, unsigned short size_start, unsigned short load_addr)
+/*uint16_t average(uint16_t array[ARRAY_SIZE]) {
+   int sum, loop;
+   uint16_t avg;
+
+   sum = avg = 0;
+   
+   for(loop = 0; loop < 10; loop++) {
+      sum = sum + array[loop];
+   }
+   
+   avg = sum / loop; 
+   
+   return avg;
+}
+
+uint16_t max(uint16_t arr[ARRAY_SIZE]) 
+{ 
+    int i; 
+        
+    // Initialize maximum element 
+    int max = arr[0]; 
+    
+    // Traverse array elements from second and 
+    // compare every element with current max  
+    for (i = 1; i < 50; i++) 
+        if (arr[i] > max) 
+            max = arr[i]; 
+    return max; 
+} */
+
+esp_err_t IMU_blob_nvs(int user, char * location)
+{   
+    uint8_t data[ARRAY_SIZE];
+    esp_err_t err;
+
+    switch(user)
+    {
+        case 0:
+            for(int x = 0; x < (ARRAY_SIZE - 1); x++){
+                data[x] = IMU_data.accel_x[x];
+            }
+            break;
+        case 1:
+            for(int x = 0; x < (ARRAY_SIZE - 1); x++){
+                data[x] = IMU_data.accel_y[x];
+            }
+            break;
+        case 2:
+            for(int x = 0; x < (ARRAY_SIZE - 1); x++){
+                data[x] = IMU_data.accel_z[x];
+            }
+            break;
+        case 3:
+            for(int x = 0; x < (ARRAY_SIZE - 1); x++){
+                data[x] = IMU_data.gyro_x[x];
+            }
+            break;
+        case 4:
+            for(int x = 0; x < (ARRAY_SIZE - 1); x++){
+                data[x] = IMU_data.gyro_y[x];
+            }
+            break;
+        case 5:
+            for(int x = 0; x < (ARRAY_SIZE - 1); x++){
+                data[x] = IMU_data.gyro_z[x];
+            }
+            break;
+        case 6:
+            for(int x = 0; x < (ARRAY_SIZE - 1); x++){
+                data[x] = IMU_data.mag_x[x];
+            }
+            break;
+        case 7:
+            for(int x = 0; x < (ARRAY_SIZE - 1); x++){
+                data[x] = IMU_data.mag_y[x];
+            }
+            break;
+        case 8:
+            for(int x = 0; x < (ARRAY_SIZE - 1); x++){
+                data[x] = IMU_data.mag_z[x];
+            }
+            break;
+        default:
+            printf("ERROR! Enter a value between 0 and 8.\n");
+    }
+    size_t size = sizeof(data);
+    // Open
+    err = save_blob_nvs(data, location, size);
+    if (err != ESP_OK) return err;
+    return ESP_OK;
+}
+
+
+/* Read from NVS and print restart counter
+   and the table with run times.
+   Return an error if anything goes wrong
+   during this process.
+ */
+
+esp_err_t save_array(void)
+{
+    esp_err_t err;
+    uint32_t init = 1;
+    uint32_t final = 2;
+    
+    err = IMU_blob_nvs(0, "accel_x");
+    if (err != ESP_OK) 
+    {
+        printf("error on save_blob_nvs");
+        return err;
+    }
+    err = IMU_blob_nvs(1, "accel_y");
+    if (err != ESP_OK) return err;
+    err = IMU_blob_nvs(2, "accel_z");
+    if (err != ESP_OK) return err;
+    err = IMU_blob_nvs(3, "gyro_x");
+    if (err != ESP_OK) return err;
+    err = IMU_blob_nvs(4, "gyro_y");
+    if (err != ESP_OK) return err;
+    err = IMU_blob_nvs(5, "gyro_z");
+    if (err != ESP_OK) return err;
+
+    //err = save_value_nvs16(average(IMU_data->gyro_x), "avg_rps");
+    //err = save_value_nvs16(max(IMU_data->gyro_x), "peak_rps");
+    err = save_value_nvs32(init, "lat_init");
+    if (err != ESP_OK) return err;
+    err = save_value_nvs32(final, "lat_final");
+    if (err != ESP_OK) return err;
+    err = save_value_nvs32(init, "long_init");
+    if (err != ESP_OK) return err;
+    err = save_value_nvs32(final, "long_final");
+    if (err != ESP_OK) return err;
+    err = save_value_nvs32(init, "alt_init");
+    if (err != ESP_OK) return err;
+    err = save_value_nvs32(final, "alt_final");
+    if (err != ESP_OK) return err;
+
+    return ESP_OK;
+}
+
+/*int inv_icm20948_firmware_load(struct inv_icm20948 * s, const unsigned char *data_start, unsigned short size_start, unsigned short load_addr)
 { 
     int write_size;
     int result;
@@ -372,8 +529,9 @@ int inv_icm20948_firmware_load(struct inv_icm20948 * s, const unsigned char *dat
 
     return 0;
 }
+*/
 
-int inv_icm20948_write_mems(struct inv_icm20948 * s, unsigned short reg, unsigned int length, const unsigned char *data)
+/*int inv_icm20948_write_mems(struct inv_icm20948 * s, unsigned short reg, unsigned int length, const unsigned char *data)
 {
     int result=0;
     unsigned int bytesWritten = 0;
@@ -405,17 +563,17 @@ int inv_icm20948_write_mems(struct inv_icm20948 * s, unsigned short reg, unsigne
     while (bytesWritten < length) 
     {
         lStartAddrSelected = (reg & 0xff);
-        /* Sets the starting read or write address for the selected memory, inside of the selected page (see MEM_SEL Register).
-           Contents are changed after read or write of the selected memory.
-           This register must be written prior to each access to initialize the register to the proper starting address.
-           The address will auto increment during burst transactions.  Two consecutive bursts without re-initializing the start address would skip one address. */
+        // Sets the starting read or write address for the selected memory, inside of the selected page (see MEM_SEL Register).
+        //   Contents are changed after read or write of the selected memory.
+        //   This register must be written prior to each access to initialize the register to the proper starting address.
+        //   The address will auto increment during burst transactions.  Two consecutive bursts without re-initializing the start address would skip one address.
         result |= inv_icm20948_write_reg(s, REG_MEM_START_ADDR, &lStartAddrSelected, 1);
         if (result)
             return result;
         
         thisLen = min(INV_MAX_SERIAL_WRITE, length-bytesWritten);
         
-        /* Write data */ 
+        // Write data 
         result |= inv_icm20948_write_reg(s, REG_MEM_R_W, &data[bytesWritten], thisLen);
         if (result)
             return result;
@@ -429,8 +587,8 @@ int inv_icm20948_write_mems(struct inv_icm20948 * s, unsigned short reg, unsigne
 
     return result;
 }
-
-int inv_icm20948_read_mems(struct inv_icm20948 * s, unsigned short reg, unsigned int length, unsigned char *data)
+*/
+/*int inv_icm20948_read_mems(struct inv_icm20948 * s, unsigned short reg, unsigned int length, unsigned char *data)
 {
 	int result=0;
 	unsigned int bytesWritten = 0;
@@ -463,16 +621,16 @@ int inv_icm20948_read_mems(struct inv_icm20948 * s, unsigned short reg, unsigned
 	while (bytesWritten < length) 
 	{
 		lStartAddrSelected = (reg & 0xff);
-		/* Sets the starting read or write address for the selected memory, inside of the selected page (see MEM_SEL Register).
-		   Contents are changed after read or write of the selected memory.
-		   This register must be written prior to each access to initialize the register to the proper starting address.
-		   The address will auto increment during burst transactions.  Two consecutive bursts without re-initializing the start address would skip one address. */
+		// Sets the starting read or write address for the selected memory, inside of the selected page (see MEM_SEL Register).
+		//   Contents are changed after read or write of the selected memory.
+		//   This register must be written prior to each access to initialize the register to the proper starting address.
+		//   The address will auto increment during burst transactions.  Two consecutive bursts without re-initializing the start address would skip one address.
 		result |= inv_icm20948_write_reg(s, REG_MEM_START_ADDR, &lStartAddrSelected, 1);
 		if (result)
 			return result;
 		
 		thisLen = min(INV_MAX_SERIAL_READ, length-bytesWritten);
-		/* Write data */
+		// Write data 
 		if(s->base_state.serial_interface == SERIAL_INTERFACE_SPI) {
 			result |= inv_icm20948_read_reg(s, REG_MEM_R_W, &dat[bytesWritten], thisLen);
 		} else {
@@ -498,6 +656,7 @@ int inv_icm20948_read_mems(struct inv_icm20948 * s, unsigned short reg, unsigned
 
 	return result;
 }
+*/
 
 void app_main(void)
 {
@@ -520,6 +679,8 @@ void app_main(void)
         .pre_cb=lcd_spi_pre_transfer_callback,  //Specify pre-transfer callback to handle D/C line
     };
 
+    ret = initialize_nvs_flash();
+
     //Initialize the SPI bus
     ret=spi_bus_initialize(1, &buscfg, 1);
     ESP_ERROR_CHECK(ret);
@@ -533,12 +694,44 @@ void app_main(void)
     cs_gpio_setting();
     imu_initialize(spi);
     
+    gpio_pad_select_gpio(GPIO_NUM_0);
+    gpio_set_direction(GPIO_NUM_0, GPIO_MODE_DEF_INPUT);
+
+    /* Read the status of GPIO0. If GPIO0 is LOW for longer than 1000 ms,
+       then save module's run time and restart it
+     */
+
+    
+    while (1) {
+        if (gpio_get_level(GPIO_NUM_0) == 0) {
+            break;
+        }
+        vTaskDelay(10/portTICK_PERIOD_MS);
+    }
+    printf("Start recording IMU\n");
     //Start reading and writing using the SPI connection
-    while(1)
+    printf("read and write the SPI connection\n");
+    for(int x = 0; x < (ARRAY_SIZE - 1); x = x + 2)
     {
-        get_accel(spi);
-        get_gyro(spi);
-        get_magnetometer(spi);
+        get_accel(spi,x);
+        get_gyro(spi,x);
+        //get_magnetometer(spi,x);
         vTaskDelay(1);
+    }
+    
+    ret = save_array();
+    if (ret != ESP_OK){
+        printf("error! save array\n");
+    }
+    
+    ret = print_blob("accel_x");
+    ret = print_blob("accel_y");
+    ret = print_blob("accel_z");
+    ret = print_blob("gyro_x");
+    ret = print_blob("gyro_y");
+    ret = print_blob("gyro_z");
+
+    if (ret != ESP_OK){
+        printf("error! print_blob\n");
     }
 }
