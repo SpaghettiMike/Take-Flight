@@ -30,7 +30,6 @@
 #include "esp_bt_main.h"
 #include "gatts_table_creat_demo.h"
 #include "esp_gatt_common_api.h"
-
 #define STORAGE_NAMESPACE "storage"
 #define GATTS_TABLE_TAG "GATTS_TABLE_DEMO"
 
@@ -177,10 +176,10 @@ static const uint16_t primary_service_uuid         = ESP_GATT_UUID_PRI_SERVICE;
 static const uint16_t character_declaration_uuid   = ESP_GATT_UUID_CHAR_DECLARE;
 static const uint16_t character_client_config_uuid = ESP_GATT_UUID_CHAR_CLIENT_CONFIG;
 static const uint8_t char_prop_read                = ESP_GATT_CHAR_PROP_BIT_READ;
-// static const uint8_t char_prop_write               = ESP_GATT_CHAR_PROP_BIT_WRITE;
+static const uint8_t char_prop_write               = ESP_GATT_CHAR_PROP_BIT_WRITE;
 static const uint8_t char_prop_read_write_notify   = ESP_GATT_CHAR_PROP_BIT_WRITE | ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_NOTIFY;
 static const uint8_t ilong_ccc[1]      = {0x00};
-static const uint8_t char_value[4]      = {0x11, 0x22, 0x33, 0x44};
+
 
 
 /* Full Database Description - Used to add attributes into the database */
@@ -189,7 +188,6 @@ static esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] =
   /* Create the BLE Service */
 
     // Service Declaration
-
     [IDX_SVC]           =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&primary_service_uuid, ESP_GATT_PERM_READ,
       sizeof(uint16_t), sizeof(GATTS_SERVICE_UUID_TEST), (uint8_t *)&GATTS_SERVICE_UUID_TEST}},
@@ -202,12 +200,12 @@ static esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] =
     /* Characteristic Value */
     [IDX_CHAR_VAL_ilong] =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&GATTS_CHAR_UUID_ilong, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
-      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(char_value), (uint8_t *)char_value}},
+      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(long_init), (uint8_t *)long_init}},
 
     /* Client Characteristic Configuration Descriptor */
     [IDX_CHAR_CFG_ilong]  =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_client_config_uuid, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
-      sizeof(uint16_t), sizeof(ilong_ccc), (uint8_t *)ilong_ccc}},
+      sizeof(uint16_t), sizeof(heart_measurement_ccc), (uint8_t *)ilong_ccc}},
 
     /* Characteristic Declaration */
     [IDX_CHAR_ilat]      =
@@ -217,7 +215,7 @@ static esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] =
     /* Characteristic Value */
     [IDX_CHAR_VAL_ilat]  =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&GATTS_CHAR_UUID_ilat, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
-      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(char_value), (uint8_t *)char_value}},
+      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(lat_init), (uint8_t *)lat_init}},
 
     /* Characteristic Declaration */
     [IDX_CHAR_flong]      =
@@ -227,7 +225,7 @@ static esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] =
     /* Characteristic Value */
     [IDX_CHAR_VAL_flong]  =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&GATTS_CHAR_UUID_flong, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
-      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(char_value), (uint8_t *)char_value}},
+      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(long_final), (uint8_t *)long_final}},
 
     /* Characteristic Declaration */
     [IDX_CHAR_flat]      =
@@ -237,7 +235,7 @@ static esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] =
     /* Characteristic Value */
     [IDX_CHAR_VAL_flat]  =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&GATTS_CHAR_UUID_flat, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
-      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(char_value), (uint8_t *)char_value}},
+      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(lat_final), (uint8_t *)lat_final}},
 
     /* Characteristic Declaration */
     [IDX_CHAR_xAccel]      =
@@ -247,7 +245,7 @@ static esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] =
     /* Characteristic Value */
     [IDX_CHAR_VAL_xAccel]  =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&GATTS_CHAR_UUID_xAccel, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
-      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(char_value), (uint8_t *)char_value}},
+      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(accel_x), (uint8_t *)accel_x}},
 
     /* Characteristic Declaration */
     [IDX_CHAR_yAccel]      =
@@ -257,7 +255,7 @@ static esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] =
     /* Characteristic Value */
     [IDX_CHAR_VAL_yAccel]  =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&GATTS_CHAR_UUID_yAccel, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
-      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(char_value), (uint8_t *)char_value}},
+      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(accel_y), (uint8_t *)accel_y}},
 
     /* Characteristic Declaration */
     [IDX_CHAR_zAccel]      =
@@ -267,7 +265,7 @@ static esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] =
     /* Characteristic Value */
     [IDX_CHAR_VAL_zAccel]  =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&GATTS_CHAR_UUID_zAccel, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
-      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(char_value), (uint8_t *)char_value}},
+      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(accel_z), (uint8_t *)accel_z}},
 
     /* Characteristic Declaration */
     [IDX_CHAR_xGyro]      =
@@ -277,7 +275,7 @@ static esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] =
     /* Characteristic Value */
     [IDX_CHAR_VAL_xGyro]  =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&GATTS_CHAR_UUID_xGyro, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
-      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(char_value), (uint8_t *)char_value}},
+      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(gyro_x), (uint8_t *)gyro_x}},
 
     /* Characteristic Declaration */
     [IDX_CHAR_yGyro]      =
@@ -287,7 +285,7 @@ static esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] =
     /* Characteristic Value */
     [IDX_CHAR_VAL_yGyro]  =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&GATTS_CHAR_UUID_yGyro, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
-      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(char_value), (uint8_t *)char_value}},
+      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(gyro_y), (uint8_t *)gyro_y}},
 
     /* Characteristic Declaration */
     [IDX_CHAR_zGyro]      =
@@ -297,7 +295,7 @@ static esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] =
     /* Characteristic Value */
     [IDX_CHAR_VAL_zGyro]  =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&GATTS_CHAR_UUID_zGyro, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
-      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(char_value), (uint8_t *)char_value}},
+      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(gyro_z), (uint8_t *)gyro_z}},
       
     // /* Characteristic Declaration */
     // [IDX_CHAR_avgRPS]      =
@@ -322,22 +320,22 @@ static esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] =
     /* Characteristic Declaration */
     [IDX_CHAR_ialt]      =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ,
-      CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_read}},
+      CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_write}},
 
     /* Characteristic Value */
     [IDX_CHAR_VAL_ialt]  =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&GATTS_CHAR_UUID_ialt, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
-      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(char_value), (uint8_t *)char_value}},
+      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(alt_init), (uint8_t *)alt_init}},
 
     /* Characteristic Declaration */
     [IDX_CHAR_falt]      =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ,
-      CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_read}},
+      CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_write}},
 
     /* Characteristic Value */
     [IDX_CHAR_VAL_falt]  =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&GATTS_CHAR_UUID_falt, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
-      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(char_value), (uint8_t *)char_value}},
+      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(alt_final), (uint8_t *)alt_final}},
 
 };
 
@@ -636,7 +634,16 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 
 void app_main(void)
 {
- 
+/*
+    uint16_t accel_x[10];
+    uint16_t accel_y[10];
+    uint16_t accel_z[10];
+    uint16_t gyro_x[10];
+    uint16_t gyro_y[10];
+    uint16_t gyro_z[10];
+*/
+    uint8_t data[10] = {0,1,2,3,4,5,6,7,8,9}; 
+    uint8_t* value = 12;
     /* Initialize NVS. */
     esp_err_t ret;
 
@@ -650,42 +657,27 @@ void app_main(void)
     ret = get_blob_values(accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z);
     ret = get_values(&lat_init, &lat_final, &long_init, &long_final, &alt_init, &alt_final)
 */
-
-    uint8_t accel_x[10] = {0,1,2,3,4,5,6,7,8,9};
-    uint8_t accel_y[10] = {0,1,2,3,4,5,6,7,8,9};
-    uint8_t accel_z[10] = {0,1,2,3,4,5,6,7,8,9};
-    uint8_t gyro_x[10] = {0,1,2,3,4,5,6,7,8,9};
-    uint8_t gyro_y[10] = {0,1,2,3,4,5,6,7,8,9};
-    uint8_t gyro_z[10] = {0,1,2,3,4,5,6,7,8,9};
-
-    uint8_t long_init = 0;
-    uint8_t lat_init = 0;
-    uint8_t alt_init = 0;
-    uint8_t long_final = 1;
-    uint8_t lat_final = 1;
-    uint8_t alt_final = 1;
-
-    gatt_db[IDX_CHAR_VAL_ilong].att_desc.length = sizeof(long_init);
-    gatt_db[IDX_CHAR_VAL_ilong].att_desc.value = &long_init;
-
+    gatt_db[IDX_CHAR_VAL_ilong].att_desc.length = sizeof(value);
+    gatt_db[IDX_CHAR_VAL_ilong].att_desc.value = value;
+/*
     gatt_db[IDX_CHAR_VAL_ilat].att_desc.length = sizeof(lat_init);
-    gatt_db[IDX_CHAR_VAL_ilat].att_desc.value = &lat_init;
+    gatt_db[IDX_CHAR_VAL_ilat].att_desc.value = lat_init;
 
     gatt_db[IDX_CHAR_VAL_flong].att_desc.length = sizeof(long_final);
-    gatt_db[IDX_CHAR_VAL_flong].att_desc.value = &long_final;
+    gatt_db[IDX_CHAR_VAL_flong].att_desc.value = long_final;
 
     gatt_db[IDX_CHAR_VAL_flat].att_desc.length = sizeof(lat_final);
-    gatt_db[IDX_CHAR_VAL_flat].att_desc.value = &lat_final;
+    gatt_db[IDX_CHAR_VAL_flat].att_desc.value = lat_final;
 
     gatt_db[IDX_CHAR_VAL_ialt].att_desc.length = sizeof(alt_init);
-    gatt_db[IDX_CHAR_VAL_ialt].att_desc.value = &alt_init;
+    gatt_db[IDX_CHAR_VAL_ialt].att_desc.value = alt_init;
 
     gatt_db[IDX_CHAR_VAL_falt].att_desc.length = sizeof(alt_final);
-    gatt_db[IDX_CHAR_VAL_falt].att_desc.value = &alt_final;
-
-    gatt_db[IDX_CHAR_VAL_xAccel].att_desc.length = sizeof(accel_x);
-    gatt_db[IDX_CHAR_VAL_xAccel].att_desc.value = accel_x;
-
+    gatt_db[IDX_CHAR_VAL_falt].att_desc.value = alt_final;
+*/
+    gatt_db[IDX_CHAR_VAL_xAccel].att_desc.length = sizeof(data);
+    gatt_db[IDX_CHAR_VAL_xAccel].att_desc.value = data;
+/*
     gatt_db[IDX_CHAR_VAL_yAccel].att_desc.length = sizeof(accel_y);
     gatt_db[IDX_CHAR_VAL_yAccel].att_desc.value = accel_y;
 
