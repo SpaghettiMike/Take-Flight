@@ -34,6 +34,9 @@
    Return an error if anything goes wrong
    during this process.
  */
+
+#define ARRAY_SIZE 50
+
 esp_err_t save_blob_nvs(uint16_t data[], char * location, size_t size)
 {
     esp_err_t err;
@@ -75,12 +78,12 @@ esp_err_t print_blob(char* location)
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
 
-    uint16_t data[10];
+    uint16_t data[ARRAY_SIZE];
 
     err = nvs_get_blob(my_handle, location, data, &size);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    for(int x = 0; x < 10; x++){
+    for(int x = 0; x < (ARRAY_SIZE - 1); x++){
         printf("%s = %d\n", location, data[x]);
     }
 
@@ -89,8 +92,7 @@ esp_err_t print_blob(char* location)
     return ESP_OK;
 }
 
-
-esp_err_t save_value_nvs(uint64_t data, char * location)
+esp_err_t save_value_nvs64(uint64_t data, char * location)
 {
     esp_err_t err;
     nvs_handle_t my_handle;
@@ -110,7 +112,47 @@ esp_err_t save_value_nvs(uint64_t data, char * location)
     return ESP_OK;
 }
 
-esp_err_t get_blob_values(uint16_t accel_x[10], uint16_t accel_y[10], uint16_t accel_z[10], uint16_t gyro_x[10], uint16_t gyro_y[10], uint16_t gyro_z[10])
+esp_err_t save_value_nvs16(uint16_t data, char * location)
+{
+    esp_err_t err;
+    nvs_handle_t my_handle;
+    // Open
+    err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
+    if (err != ESP_OK) return err;
+
+    err = nvs_set_u16(my_handle, location, data);
+    if (err != ESP_OK) return err;
+
+    // Commit*/
+    err = nvs_commit(my_handle);
+    if (err != ESP_OK) return err;
+
+    // Close*/
+    nvs_close(my_handle);
+    return ESP_OK;
+}
+
+esp_err_t save_value_nvs32(uint32_t data, char * location)
+{
+    esp_err_t err;
+    nvs_handle_t my_handle;
+    // Open
+    err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
+    if (err != ESP_OK) return err;
+
+    err = nvs_set_u32(my_handle, location, data);
+    if (err != ESP_OK) return err;
+
+    // Commit*/
+    err = nvs_commit(my_handle);
+    if (err != ESP_OK) return err;
+
+    // Close*/
+    nvs_close(my_handle);
+    return ESP_OK;
+}
+
+esp_err_t get_blob_values(uint16_t accel_x[ARRAY_SIZE], uint16_t accel_y[ARRAY_SIZE], uint16_t accel_z[ARRAY_SIZE], uint16_t gyro_x[ARRAY_SIZE], uint16_t gyro_y[ARRAY_SIZE], uint16_t gyro_z[ARRAY_SIZE])
 {
     nvs_handle_t my_handle;
     esp_err_t err;
@@ -140,7 +182,18 @@ esp_err_t get_blob_values(uint16_t accel_x[10], uint16_t accel_y[10], uint16_t a
    return ESP_OK; 
 }
 
-esp_err_t get_values(uint64_t* lat_init, uint64_t* lat_final, uint64_t* long_init, uint64_t* long_final, uint64_t* alt_init, uint64_t* alt_final, uint16_t* avg_rps, uint16_t* peak_rps)
+esp_err_t initialize_nvs_flash(void)
+{
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        // NVS partition was truncated and needs to be erased
+        // Retry nvs_flash_init
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        err = nvs_flash_init();
+    }
+}
+
+esp_err_t get_values(uint32_t* lat_init, uint32_t* lat_final, uint32_t* long_init, uint32_t* long_final, uint32_t* alt_init, uint32_t* alt_final, uint16_t* avg_rps, uint16_t* peak_rps)
 {
     nvs_handle_t my_handle;
     esp_err_t err;
@@ -149,22 +202,22 @@ esp_err_t get_values(uint64_t* lat_init, uint64_t* lat_final, uint64_t* long_ini
     err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
     if (err != ESP_OK) return err;
 
-    err = nvs_get_u64(my_handle, "lat_init", lat_init);
+    err = nvs_get_u32(my_handle, "lat_init", lat_init);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    err = nvs_get_u64(my_handle, "lat_final", lat_final);
+    err = nvs_get_u32(my_handle, "lat_final", lat_final);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    err = nvs_get_u64(my_handle, "long_init", long_init);
+    err = nvs_get_u32(my_handle, "long_init", long_init);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    err = nvs_get_u64(my_handle, "long_final", long_final);
+    err = nvs_get_u32(my_handle, "long_final", long_final);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    err = nvs_get_u64(my_handle, "alt_init", alt_init);
+    err = nvs_get_u32(my_handle, "alt_init", alt_init);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
-    err = nvs_get_u64(my_handle, "alt_final", alt_final);
+    err = nvs_get_u32(my_handle, "alt_final", alt_final);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
     err = nvs_get_u16(my_handle, "avg_rps", avg_rps);
@@ -177,8 +230,6 @@ esp_err_t get_values(uint64_t* lat_init, uint64_t* lat_final, uint64_t* long_ini
     nvs_close(my_handle);
     return ESP_OK;
 }
-
-
 
 esp_err_t print_value(char* location)
 {
@@ -199,8 +250,6 @@ esp_err_t print_value(char* location)
     nvs_close(my_handle);
     return ESP_OK;
 }
-
-
 
 void initialize_nvs_data(void)
 {

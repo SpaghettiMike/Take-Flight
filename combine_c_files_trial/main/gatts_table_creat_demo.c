@@ -637,15 +637,20 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 
 void gatt_main(void)
 {
-    /*
-    uint16_t accel_x;
-    uint16_t accel_y;
-    uint16_t accel_z;
-    uint16_t gyro_x;
-    uint16_t gyro_y;
-    uint16_t gyro_z;
-    */
- 
+    uint16_t accel_x[50];
+    uint16_t accel_y[50];
+    uint16_t accel_z[50];
+    uint16_t gyro_x[50];
+    uint16_t gyro_y[50];
+    uint16_t gyro_z[50];
+    
+    uint32_t long_init;
+    uint32_t long_final;
+    uint32_t lat_init;
+    uint32_t lat_final;
+    uint32_t alt_init;
+    uint32_t alt_final;
+
     /* Initialize NVS. */
     esp_err_t ret;
 
@@ -657,7 +662,7 @@ void gatt_main(void)
     ESP_ERROR_CHECK( ret );
 
     ret = get_blob_values(accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z);
-    ret = get_values(&lat_init, &lat_final, &long_init, &long_final, &alt_init, &alt_final)
+    ret = get_values(&lat_init, &lat_final, &long_init, &long_final, &alt_init, &alt_final);
 
     gatt_db[IDX_CHAR_VAL_ilong].att_desc.length = sizeof(long_init);
     gatt_db[IDX_CHAR_VAL_ilong].att_desc.value = long_init;

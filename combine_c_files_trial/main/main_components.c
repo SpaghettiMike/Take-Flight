@@ -18,11 +18,13 @@
 
 #include "nvs_blob.h"
 #include "gatts_table_creat_demo.h"
+#include "IMU_functions.h"
 
 
 
 void app_main(void)
 {
-    initialize_nvs_data();
+    IMU_main();
+//    initialize_nvs_data();
     gatt_main();
 }

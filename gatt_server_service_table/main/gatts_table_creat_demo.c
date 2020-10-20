@@ -634,15 +634,16 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 
 void app_main(void)
 {
-    /*
-    uint16_t accel_x;
-    uint16_t accel_y;
-    uint16_t accel_z;
-    uint16_t gyro_x;
-    uint16_t gyro_y;
-    uint16_t gyro_z;
-    */
- 
+/*
+    uint16_t accel_x[10];
+    uint16_t accel_y[10];
+    uint16_t accel_z[10];
+    uint16_t gyro_x[10];
+    uint16_t gyro_y[10];
+    uint16_t gyro_z[10];
+*/
+    uint8_t data[10] = {0,1,2,3,4,5,6,7,8,9}; 
+    uint8_t* value = 12;
     /* Initialize NVS. */
     esp_err_t ret;
 
@@ -652,13 +653,13 @@ void app_main(void)
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK( ret );
-
+/*
     ret = get_blob_values(accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z);
     ret = get_values(&lat_init, &lat_final, &long_init, &long_final, &alt_init, &alt_final)
-
-    gatt_db[IDX_CHAR_VAL_ilong].att_desc.length = sizeof(long_init);
-    gatt_db[IDX_CHAR_VAL_ilong].att_desc.value = long_init;
-
+*/
+    gatt_db[IDX_CHAR_VAL_ilong].att_desc.length = sizeof(value);
+    gatt_db[IDX_CHAR_VAL_ilong].att_desc.value = value;
+/*
     gatt_db[IDX_CHAR_VAL_ilat].att_desc.length = sizeof(lat_init);
     gatt_db[IDX_CHAR_VAL_ilat].att_desc.value = lat_init;
 
@@ -673,10 +674,10 @@ void app_main(void)
 
     gatt_db[IDX_CHAR_VAL_falt].att_desc.length = sizeof(alt_final);
     gatt_db[IDX_CHAR_VAL_falt].att_desc.value = alt_final;
-
-    gatt_db[IDX_CHAR_VAL_xAccel].att_desc.length = sizeof(accel_x);
-    gatt_db[IDX_CHAR_VAL_xAccel].att_desc.value = accel_x;
-
+*/
+    gatt_db[IDX_CHAR_VAL_xAccel].att_desc.length = sizeof(data);
+    gatt_db[IDX_CHAR_VAL_xAccel].att_desc.value = data;
+/*
     gatt_db[IDX_CHAR_VAL_yAccel].att_desc.length = sizeof(accel_y);
     gatt_db[IDX_CHAR_VAL_yAccel].att_desc.value = accel_y;
 
@@ -691,7 +692,7 @@ void app_main(void)
 
     gatt_db[IDX_CHAR_VAL_zGyro].att_desc.length = sizeof(gyro_z);
     gatt_db[IDX_CHAR_VAL_zGyro].att_desc.value = gyro_z;
-
+*/
 
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
 
