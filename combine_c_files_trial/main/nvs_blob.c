@@ -9,13 +9,6 @@
    software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
    CONDITIONS OF ANY KIND, either express or implied.
 */
-#include <stdio.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_system.h"
-#include "nvs_flash.h"
-#include "nvs.h"
-#include "driver/gpio.h"
 
 #include "nvs_blob.h"
 
@@ -35,9 +28,9 @@
    during this process.
  */
 
-#define ARRAY_SIZE 50
+#define ARRAY_SIZE 200
 
-esp_err_t save_blob_nvs(uint16_t data[], char * location, size_t size)
+esp_err_t save_blob_nvs(uint8_t data[], char * location, size_t size)
 {
     esp_err_t err;
     nvs_handle_t my_handle;
@@ -64,6 +57,20 @@ esp_err_t save_blob_nvs(uint16_t data[], char * location, size_t size)
    Return an error if anything goes wrong
    during this process.
  */
+
+void nvs_erase(void)
+{
+    nvs_flash_erase_partition("accel_x");
+    nvs_flash_erase_partition("accel_y");
+    nvs_flash_erase_partition("accel_z");
+    nvs_flash_erase_partition("gyro_x");
+    nvs_flash_erase_partition("gyro_y");
+    nvs_flash_erase_partition("gyro_z");
+    // nvs_flash_erase_partition("mag_x");
+    // nvs_flash_erase_partition("mag_y");
+    // nvs_flash_erase_partition("mag_z");
+}
+
 esp_err_t print_blob(char* location)
 {
     nvs_handle_t my_handle;
@@ -78,13 +85,13 @@ esp_err_t print_blob(char* location)
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
 
-    uint16_t data[ARRAY_SIZE];
+    uint8_t data[ARRAY_SIZE];
 
     err = nvs_get_blob(my_handle, location, data, &size);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
     for(int x = 0; x < (ARRAY_SIZE - 1); x++){
-        printf("%s = %d\n", location, data[x]);
+        printf("0x%X ", data[x]);
     }
 
     // Close
@@ -152,7 +159,7 @@ esp_err_t save_value_nvs32(uint32_t data, char * location)
     return ESP_OK;
 }
 
-esp_err_t get_blob_values(uint16_t accel_x[ARRAY_SIZE], uint16_t accel_y[ARRAY_SIZE], uint16_t accel_z[ARRAY_SIZE], uint16_t gyro_x[ARRAY_SIZE], uint16_t gyro_y[ARRAY_SIZE], uint16_t gyro_z[ARRAY_SIZE])
+esp_err_t get_blob_values(uint8_t accel_x[ARRAY_SIZE], uint8_t accel_y[ARRAY_SIZE], uint8_t accel_z[ARRAY_SIZE], uint8_t gyro_x[ARRAY_SIZE], uint8_t gyro_y[ARRAY_SIZE], uint8_t gyro_z[ARRAY_SIZE])
 {
     nvs_handle_t my_handle;
     esp_err_t err;
@@ -182,6 +189,30 @@ esp_err_t get_blob_values(uint16_t accel_x[ARRAY_SIZE], uint16_t accel_y[ARRAY_S
    return ESP_OK; 
 }
 
+esp_err_t delete_nvs_data(void)
+{
+    esp_err_t err;
+    err = nvs_flash_erase_partition("accel_x");
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+
+    err = nvs_flash_erase_partition("accel_y");
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+
+    err = nvs_flash_erase_partition("accel_z");
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+
+    err = nvs_flash_erase_partition("gyro_x");
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+
+    err = nvs_flash_erase_partition("gyro_y");
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+
+    err = nvs_flash_erase_partition("gyro_z");
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+
+    return ESP_OK;
+}
+
 esp_err_t initialize_nvs_flash(void)
 {
     esp_err_t err = nvs_flash_init();
@@ -191,6 +222,7 @@ esp_err_t initialize_nvs_flash(void)
         ESP_ERROR_CHECK(nvs_flash_erase());
         err = nvs_flash_init();
     }
+    return ESP_OK;
 }
 
 esp_err_t get_values(uint32_t* lat_init, uint32_t* lat_final, uint32_t* long_init, uint32_t* long_final, uint32_t* alt_init, uint32_t* alt_final, uint16_t* avg_rps, uint16_t* peak_rps)
@@ -251,7 +283,7 @@ esp_err_t print_value(char* location)
     return ESP_OK;
 }
 
-void initialize_nvs_data(void)
+/*void initialize_nvs_data(void)
 {
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -308,11 +340,11 @@ void initialize_nvs_data(void)
     err = save_value_nvs(test_value1, alt_init);
     err = save_value_nvs(test_value2, alt_final); 
 
- /*   err = print_value(lat_init);
+    err = print_value(lat_init);
     err = print_value(long_init);
     err = print_value(lat_final);
     err = print_value(long_final);
     err = print_value(alt_init);
-    err = print_value(alt_final);*/
+    err = print_value(alt_final);
 
-}
+}*/

@@ -11,20 +11,16 @@
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "esp_system.h"
-#include "driver/spi_master.h"
-#include "soc/gpio_struct.h"
-#include "driver/gpio.h"
 
 #include "nvs_blob.h"
 #include "gatts_table_creat_demo.h"
-#include "IMU_functions.h"
-
-
+#include "spi_master_example_main.h"
 
 void app_main(void)
 {
-    IMU_main();
+    TaskHandle_t xHandle1;
+    TaskHandle_t xHandle2;
+    xTaskCreate(spi_main,"spi_main", 20000, NULL, 1, &xHandle1);
 //    initialize_nvs_data();
-    gatt_main();
+    xTaskCreate(gatt_main,"gatt_main", 20000, NULL, 2, &xHandle2);
 }

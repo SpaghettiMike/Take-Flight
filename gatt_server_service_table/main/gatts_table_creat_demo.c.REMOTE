@@ -1,5 +1,6 @@
 /*
    This example code is in the Public Domain (or CC0 licensed, at your option.)
+
    Unless required by applicable law or agreed to in writing, this
    software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
    CONDITIONS OF ANY KIND, either express or implied.
@@ -14,9 +15,21 @@
 * data.
 *
 ****************************************************************************/
+
+
+ #include "freertos/FreeRTOS.h"
+ #include "freertos/task.h"
+ #include "freertos/event_groups.h"
+ #include "esp_system.h"
+ #include "esp_log.h"
+ #include "nvs_flash.h"
+ #include "esp_bt.h"
+
+#include "esp_gap_ble_api.h"
+#include "esp_gatts_api.h"
+#include "esp_bt_main.h"
 #include "gatts_table_creat_demo.h"
-#include "nvs_blob.h"
-#include "spi_master_example_main.h"
+#include "esp_gatt_common_api.h"
 
 #define STORAGE_NAMESPACE "storage"
 #define GATTS_TABLE_TAG "GATTS_TABLE_DEMO"
@@ -621,27 +634,38 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
     } while (0);
 }
 
-void change_bt_values(void)
+void app_main(void)
 {
+ 
+    /* Initialize NVS. */
     esp_err_t ret;
-/*    uint8_t long_init;
-    uint8_t lat_init;
-    uint8_t alt_init;
-    uint8_t long_final;
-    uint8_t lat_final;
-    uint8_t alt_final;*/ 
 
-    uint8_t accel_x[ARRAY_SIZE];
-    uint8_t accel_y[ARRAY_SIZE];
-    uint8_t accel_z[ARRAY_SIZE];
-    uint8_t gyro_x[ARRAY_SIZE];
-    uint8_t gyro_y[ARRAY_SIZE];
-    uint8_t gyro_z[ARRAY_SIZE];
-    
+    ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK( ret );
+/*
     ret = get_blob_values(accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z);
-//    ret = get_values(&lat_init, &lat_final, &long_init, &long_final, &alt_init, &alt_final);
+    ret = get_values(&lat_init, &lat_final, &long_init, &long_final, &alt_init, &alt_final)
+*/
 
-/*    gatt_db[IDX_CHAR_VAL_ilong].att_desc.length = sizeof(long_init);
+    uint8_t accel_x[10] = {0,1,2,3,4,5,6,7,8,9};
+    uint8_t accel_y[10] = {0,1,2,3,4,5,6,7,8,9};
+    uint8_t accel_z[10] = {0,1,2,3,4,5,6,7,8,9};
+    uint8_t gyro_x[10] = {0,1,2,3,4,5,6,7,8,9};
+    uint8_t gyro_y[10] = {0,1,2,3,4,5,6,7,8,9};
+    uint8_t gyro_z[10] = {0,1,2,3,4,5,6,7,8,9};
+
+    uint8_t long_init = 0;
+    uint8_t lat_init = 0;
+    uint8_t alt_init = 0;
+    uint8_t long_final = 1;
+    uint8_t lat_final = 1;
+    uint8_t alt_final = 1;
+
+    gatt_db[IDX_CHAR_VAL_ilong].att_desc.length = sizeof(long_init);
     gatt_db[IDX_CHAR_VAL_ilong].att_desc.value = &long_init;
 
     gatt_db[IDX_CHAR_VAL_ilat].att_desc.length = sizeof(lat_init);
@@ -658,7 +682,7 @@ void change_bt_values(void)
 
     gatt_db[IDX_CHAR_VAL_falt].att_desc.length = sizeof(alt_final);
     gatt_db[IDX_CHAR_VAL_falt].att_desc.value = &alt_final;
-*/
+
     gatt_db[IDX_CHAR_VAL_xAccel].att_desc.length = sizeof(accel_x);
     gatt_db[IDX_CHAR_VAL_xAccel].att_desc.value = accel_x;
 
@@ -676,38 +700,7 @@ void change_bt_values(void)
 
     gatt_db[IDX_CHAR_VAL_zGyro].att_desc.length = sizeof(gyro_z);
     gatt_db[IDX_CHAR_VAL_zGyro].att_desc.value = gyro_z;
-}
 
-void update_gatt(void)
-{
-    esp_err_t ret;
-    
-    uint8_t accel_x[ARRAY_SIZE];
-    uint8_t accel_y[ARRAY_SIZE];
-    uint8_t accel_z[ARRAY_SIZE];
-    uint8_t gyro_x[ARRAY_SIZE];
-    uint8_t gyro_y[ARRAY_SIZE];
-    uint8_t gyro_z[ARRAY_SIZE];
-    
-    ret = get_blob_values(accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z);
-    print_blob("accel_x");
-//    ret = get_values(&lat_init, &lat_final, &long_init, &long_final, &alt_init, &alt_final);
-
-    esp_ble_gatts_set_attr_value(GATTS_CHAR_UUID_xAccel, sizeof(accel_x), accel_x);
-    esp_ble_gatts_set_attr_value(GATTS_CHAR_UUID_yAccel, sizeof(accel_x), accel_x);
-    esp_ble_gatts_set_attr_value(GATTS_CHAR_UUID_zAccel, sizeof(accel_x), accel_x);
-    esp_ble_gatts_set_attr_value(GATTS_CHAR_UUID_xGyro, sizeof(accel_x), accel_x);
-    esp_ble_gatts_set_attr_value(GATTS_CHAR_UUID_yGyro, sizeof(accel_x), accel_x);
-    esp_ble_gatts_set_attr_value(GATTS_CHAR_UUID_zGyro, sizeof(accel_x), accel_x);
-
-}
-
-
-void gatt_main(void)
-{   
-    change_bt_values();
-
-    esp_err_t ret;
 
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
 
@@ -758,16 +751,6 @@ void gatt_main(void)
     if (local_mtu_ret){
         ESP_LOGE(GATTS_TABLE_TAG, "set local  MTU failed, error code = %x", local_mtu_ret);
     }
-    while (1) {
-        if (gpio_get_level(GPIO_NUM_0) == 0) {
-            vTaskDelay(500/portTICK_PERIOD_MS);
-            if (gpio_get_level(GPIO_NUM_0) == 0) {
-                printf("update gatt\n");
-                change_bt_values();
-            //    update_gatt();
-            //    ret = esp_ble_gatts_register_callback(gatts_event_handler);
-            }
-        }
-        vTaskDelay(10/portTICK_PERIOD_MS);
-    }
+
+
 }
